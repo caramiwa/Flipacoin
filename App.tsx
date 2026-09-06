@@ -95,7 +95,8 @@ function Home() {
   const flipCoin = () => {
     if (isFlipping) return;
     const result: FlipResult = Math.random() < 0.5 ? 'Heads' : 'Tails';
-    const landingRotation = result === currentResult ? 1440 : 1620;
+    const startRotation = currentResult === 'Heads' ? 0 : 180;
+    const landingRotation = result === currentResult ? startRotation + 1440 : startRotation + 1620;
 
     setIsFlipping(true);
 
@@ -103,9 +104,9 @@ function Home() {
     coin?.getAnimations().forEach((animation) => animation.cancel());
     coin?.animate(
       [
-        { transform: 'rotateX(0deg)' },
-        { transform: `rotateX(${landingRotation * 0.35}deg)`, offset: 0.35 },
-        { transform: `rotateX(${landingRotation * 0.72}deg)`, offset: 0.72 },
+        { transform: `rotateX(${startRotation}deg)` },
+        { transform: `rotateX(${startRotation + (landingRotation - startRotation) * 0.35}deg)`, offset: 0.35 },
+        { transform: `rotateX(${startRotation + (landingRotation - startRotation) * 0.72}deg)`, offset: 0.72 },
         { transform: `rotateX(${landingRotation}deg)` },
       ],
       {
@@ -131,8 +132,6 @@ function Home() {
       setHistory([]);
     }
   };
-
-  const oppositeResult: FlipResult = currentResult === 'Heads' ? 'Tails' : 'Heads';
 
   return (
     <div className="app-shell">
@@ -183,6 +182,7 @@ function Home() {
                 className="coin"
                 data-testid="display-coin"
                 style={{
+                  transform: `rotateX(${currentResult === 'Heads' ? 0 : 180}deg)`,
                   transformStyle: 'preserve-3d',
                   willChange: 'transform',
                   background: 'hsl(var(--sidebar-primary))',
@@ -204,7 +204,7 @@ function Home() {
                     transform: 'translateZ(1px)',
                   }}
                 >
-                  <span className="coin-letter">{currentResult[0]}</span>
+                  <span className="coin-letter">H</span>
                   <span className="coin-caption">your answer</span>
                 </div>
                 <div
@@ -221,7 +221,7 @@ function Home() {
                     transform: 'rotateX(180deg) translateZ(1px)',
                   }}
                 >
-                  <span className="coin-letter">{oppositeResult[0]}</span>
+                  <span className="coin-letter">T</span>
                   <span className="coin-caption">your answer</span>
                 </div>
               </div>
