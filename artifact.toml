@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Coin Flip App"
+description = "A polished, lightweight coin flip web app inspired by online coin toss tools, with animated flips, keyboard support, result history, and a Google Apps Script HTMLService-ready source version."
+version = "1.0.0"
+id = "artifacts/coin-flip-app"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25815
+
+[services.development]
+run = "pnpm --filter @workspace/coin-flip-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/coin-flip-app", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/coin-flip-app/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25815"
+BASE_PATH = "/"
