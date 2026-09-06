@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -56,6 +56,7 @@ function Home() {
   const [currentResult, setCurrentResult] = useState<FlipResult>('Heads');
   const [isFlipping, setIsFlipping] = useState(false);
   const [isDark, setIsDark] = useState(() => window.localStorage.getItem(THEME_KEY) === 'dark');
+  const coinRef = useRef<HTMLDivElement>(null);
 
   const counts = useMemo(() => {
     const heads = history.filter((entry) => entry.result === 'Heads').length;
@@ -94,7 +95,26 @@ function Home() {
   const flipCoin = () => {
     if (isFlipping) return;
     const result: FlipResult = Math.random() < 0.5 ? 'Heads' : 'Tails';
+    const landingRotation = result === currentResult ? 1440 : 1620;
+
     setIsFlipping(true);
+
+    const coin = coinRef.current;
+    coin?.getAnimations().forEach((animation) => animation.cancel());
+    coin?.animate(
+      [
+        { transform: 'rotateX(0deg)' },
+        { transform: `rotateX(${landingRotation * 0.35}deg)`, offset: 0.35 },
+        { transform: `rotateX(${landingRotation * 0.72}deg)`, offset: 0.72 },
+        { transform: `rotateX(${landingRotation}deg)` },
+      ],
+      {
+        duration: 980,
+        easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
+        fill: 'forwards',
+      },
+    );
+
     window.setTimeout(() => {
       setCurrentResult(result);
       setHistory((previous) => [
@@ -111,6 +131,8 @@ function Home() {
       setHistory([]);
     }
   };
+
+  const oppositeResult: FlipResult = currentResult === 'Heads' ? 'Tails' : 'Heads';
 
   return (
     <div className="app-shell">
@@ -156,9 +178,50 @@ function Home() {
             <div className={`coin-stage${isFlipping ? ' is-busy' : ''}`} aria-live="polite">
               <div className="orbit" aria-hidden="true" />
               <div className="coin-shadow" aria-hidden="true" />
-              <div className={`coin${isFlipping ? ' is-flipping' : ''}`} data-testid="display-coin">
-                <div className="coin-face">
+              <div
+                ref={coinRef}
+                className="coin"
+                data-testid="display-coin"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  willChange: 'transform',
+                  background: 'hsl(var(--sidebar-primary))',
+                  backgroundImage: 'none',
+                  boxShadow: 'none',
+                  border: '2px solid hsl(var(--primary))',
+                }}
+              >
+                <div
+                  className="coin-face"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'hsl(var(--sidebar-primary))',
+                    backgroundImage: 'none',
+                    boxShadow: 'none',
+                    border: 'none',
+                    backfaceVisibility: 'hidden',
+                    transform: 'translateZ(1px)',
+                  }}
+                >
                   <span className="coin-letter">{currentResult[0]}</span>
+                  <span className="coin-caption">your answer</span>
+                </div>
+                <div
+                  className="coin-face"
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'hsl(var(--sidebar-primary))',
+                    backgroundImage: 'none',
+                    boxShadow: 'none',
+                    border: 'none',
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateX(180deg) translateZ(1px)',
+                  }}
+                >
+                  <span className="coin-letter">{oppositeResult[0]}</span>
                   <span className="coin-caption">your answer</span>
                 </div>
               </div>
@@ -175,6 +238,12 @@ function Home() {
               onClick={flipCoin}
               disabled={isFlipping}
               data-testid="button-flip-coin"
+              style={{
+                background: 'hsl(var(--primary))',
+                backgroundImage: 'none',
+                boxShadow: 'none',
+                border: '1px solid hsl(var(--primary))',
+              }}
             >
               <RotateCw size={20} aria-hidden="true" />
               {isFlipping ? 'Tossing…' : 'Flip the coin'}
